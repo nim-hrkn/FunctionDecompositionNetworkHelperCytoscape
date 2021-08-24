@@ -39,9 +39,24 @@ class cxNetwork:
         with open(filename) as f:
             network = json.load(f)
         self.network = network
-        self.analyze()
+        self.analyze_nodes()
+        self.analyze_id()
 
-    def analyze(self):
+    def analyze_id(self):
+        id_max = 0
+        for node in self.io_nodes:
+            id_max = max(id_max, node["@id"])
+        for node in self.device_nodes:
+            id_max = max(id_max, node["@id"])
+        for node in self.edges:
+            id_max = max(id_max, node["@id"])
+        self.id_max = id_max
+
+    def next_id(self):
+        self.id_max += 1
+        return self.id_max
+
+    def analyze_nodes(self):
         network = self.network
         for attrib_list in network:
             for key, values in attrib_list.items():
@@ -57,22 +72,50 @@ class cxNetwork:
         for node in self.device_nodes:
             self.io_nodes.remove(node)
 
-    def graphvis(self, filename=None):
+    def workflow(self, filename=None):
         g = Digraph(format="png")
         for node in cxreader.io_nodes:
             label = deepcopy(node["n"])
-            # label = label.replace(" ", "_")
             g.node(str(node["@id"]), label=label, shape="oval")
 
         for node in cxreader.device_nodes:
             label = deepcopy(node["n"])
-            # label = label.replace(" ", "_")
             g.node(str(node["@id"]), label=label, shape="rectangle")
 
         for edge in cxreader.edges:
             s = edge["s"]
             t = edge["t"]
             g.edge(str(s), str(t))
+        if filename is not None:
+            g.render(filename)
+        g.view()
+
+    def make_apply_node(self, device_node):
+        label = " ".join(["apply", device_node["n"]])
+        newid = self.next_id()
+        node = {"@id": newid, "n": label}
+        return node
+
+    def fd_network(self, filename=None):
+        g = Digraph(format="png")
+        for node in cxreader.io_nodes:
+            label = " ".join(["obtain", node["n"]])
+            g.node(str(node["@id"]), label=label, shape="oval")
+
+        for node in cxreader.device_nodes:
+            label = " ".join([node["n"], "way"])
+            g.node(str(node["@id"]), label=label, shape="rectangle")
+
+            apply_node = self.make_apply_node(node)
+            g.node(str(apply_node["@id"]),
+                   label=apply_node["n"], shape="hexagon")
+
+            g.edge(str(node["@id"]), str(apply_node["@id"]))
+
+        for edge in self.edges:
+            s = edge["s"]
+            t = edge["t"]
+            g.edge(str(t), str(s))
         if filename is not None:
             g.render(filename)
         g.view()
@@ -85,4 +128,5 @@ if __name__ == "__main__":
     cxreader = cxNetwork(filename)
     print(cxreader.edges)
 
-    cxreader.graphvis()
+    # cxreader.workflow()
+    cxreader.fd_network()
