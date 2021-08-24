@@ -80,6 +80,7 @@ class cxNetwork:
 
 if __name__ == "__main__":
     filename = "Network_1.cx"
+    filename = "heat_exchanger.cx"
 
     cxreader = cxNetwork(filename)
     print(cxreader.edges)
