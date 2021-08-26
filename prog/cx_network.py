@@ -1,3 +1,4 @@
+import os
 from graphviz import Digraph
 import json
 import numpy as np
@@ -172,7 +173,11 @@ class cxReader:
             t = edge["t"]
             g.edge(str(s), str(t))
         if filename is not None:
-            g.render(filename)
+            s = os.path.split(filename)
+            # write to the current directory
+            outputfilename = s[-1]
+            g.render(outputfilename)
+            print("save to", outputfilename)
         g.view()
 
 
@@ -210,7 +215,7 @@ def _calc_idCounter(data, key):
     return int(id_array.max())
 
 
-class FDNPlotter:
+class FDNPlotterBase:
     def __init__(self, cxnetwork_list, fix_node_id=True):
         if fix_node_id:
             cxnetwork_fix_list = []
@@ -257,13 +262,19 @@ class FDNPlotter:
                 id_ = id_dic[edge[st]]
                 edge[st] = id_
 
-    def graphviz_fd_network(self, filename=None, type_="workflow"):
+
+class FDNGraphvizPlotter(FDNPlotterBase):
+    def __init__(self, cxnetwork_list, fix_node_id=True):
+        super().__init__(cxnetwork_list, fix_node_id=True)
+
+    def show(self, filename=None):
 
         g = Digraph(format="png")
         for node in self.fd_nodes:
             if "fillcolor" in node:
                 g.node(str(node["@id"]), label=node["n"],
-                       shape=node["shape"], style="filled", fillcolor=node["fillcolor"])
+                       shape=node["shape"], style="filled",
+                       fillcolor=node["fillcolor"])
             else:
                 g.node(str(node["@id"]), label=node["n"], shape=node["shape"])
 
@@ -274,7 +285,13 @@ class FDNPlotter:
 
         if filename is not None:
             g.render(filename)
+            print("save to", filename)
         g.view()
+
+
+class FDNCXPlotter(FDNPlotterBase):
+    def __init__(self, cxnetwork_list, fix_node_id=True):
+        super().__init__(cxnetwork_list, fix_node_id=True)
 
     def fix_metaData(self, metaData, data):
         data_fix = []
@@ -318,7 +335,7 @@ class FDNPlotter:
                 lines.append(element)
         return lines
 
-    def cx_fd_network(self, network_name, filename):
+    def save(self, network_name="fd_network", filename=None):
         change = True
 
         if True:
@@ -402,41 +419,3 @@ class FDNPlotter:
             with open(filename, "w") as f:
                 json.dump(data, f)
             print("save to", filename)
-
-
-if __name__ == "__main__":
-    import argparse
-    if True:
-        parser = argparse.ArgumentParser()
-        parser.add_argument("--show_workflow",
-                            help="show workflows", action="store_true")
-        parser.add_argument("--show_is_a",
-                            help="show is-a relation", action="store_true")
-        parser.add_argument("--output_filename", help="output name",
-                            default="output.cx")
-        parser.add_argument("--name", help="Network name",
-                            default="fd_network")
-        parser.add_argument("file", nargs="+")
-        args = parser.parse_args()
-
-        filename_list = args.file
-
-    cxreader_list = []
-    for filename in filename_list:
-        if "is-a" in filename:
-            type_ = "is-a"
-        else:
-            type_ = "workflow"
-        cxreader = cxReader(filename)
-        cxreader.make_network(type_)
-        if type_ == "workflow" and args.show_workflow:
-            cxreader.graphviz_workflow(filename+".png")
-        if type_ == "is-a" and args.show_is_a:
-            cxreader.graphviz_workflow(filename+".png", rankdir="TB")
-
-        cxreader_list.append(cxreader)
-
-    plotter = FDNPlotter(cxreader_list)
-
-    plotter.graphviz_fd_network("df_network")
-    plotter.cx_fd_network(args.name, args.output_filename)
