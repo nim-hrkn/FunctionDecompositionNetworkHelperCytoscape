@@ -102,7 +102,7 @@ class cxReader:
             newid = self.next_id()
             label = " ".join([target_node["n"], "way"])
             way_node = {"@id": newid, "n": label,
-                        "shape": "rectangle", "fillcolor": "gray"}
+                        "shape": "rectangle", "fillcolor": "#d3d3d3"}
             self.fd_nodes.append(way_node)
 
             newid = self.next_id()
@@ -136,8 +136,8 @@ class cxReader:
 
         for node in self.device_nodes:
             label = " ".join([node["n"], "way"])
-            way_node = {"@id": node["@id"], "n": label, "shape": "rectangle"}
-
+            way_node = {"@id": node["@id"], "n": label,
+                        "shape": "rectangle", "fillcolor": '#99FFFF'}
             self.fd_nodes.append(way_node)
 
             source_id = self.find_node_connection(way_node["@id"], "t")
@@ -324,14 +324,26 @@ class FDNCXPlotter(FDNPlotterBase):
 
     def fix_cyVisualProperties(self, lines):
         for node in self.fd_nodes:
+            element_list = []
             if "shape" in node:
                 shape_value = node["shape"].upper()
                 if shape_value == "OVAL":
                     shape_value = "ELLIPSE"
+                element_list.append(
+                    {'NODE_SHAPE': shape_value})
+            if "fillcolor" in node:
+                fillcolor_value = node["fillcolor"].upper()
+                element_list.append(
+                    {'NODE_FILL_COLOR': fillcolor_value})
+            if len(element_list) > 0:
+                print("element_list", element_list)
+
+                element_prop = {}
+                for element in element_list:
+                    element_prop.update(element)
                 element = {'properties_of': 'nodes',
                            'applies_to': node["@id"],
-                           'properties': {'NODE_SHAPE': shape_value}}
-
+                           'properties': element_prop}
                 lines.append(element)
         return lines
 
