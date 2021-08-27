@@ -51,18 +51,8 @@ if __name__ == "__main__":
 
         cxreader_list = []
         for filename in filename_list:
-            if "is-a" in filename:
-                type_ = "is-a"
-            else:
-                type_ = "workflow"
             cxreader = cxReader(filename)
-            cxreader.make_network(type_)
-            if type_ == "workflow" and args.graphviz_workflow:
-                cxreader.graphviz_workflow(filename+".png")
-            if type_ == "is-a" and args.graphviz_is_a:
-                cxreader.graphviz_workflow(
-                    filename+".png", rankdir="TB")
-
+            cxreader.make_network()
             cxreader_list.append(cxreader)
 
         if args.graphviz_FDN:
