@@ -127,7 +127,7 @@ class cxReader:
             t = edge["t"]
             id_ = edge["@id"]
             # change the order between t and s
-            self.fd_edges.append({"@id": id_, "s": t, "t": s})
+            self.fd_edges.append({"@id": id_, "s": s, "t": t})
 
         for node in self.io_nodes:
             label = " ".join(["Obtain", node["n"]])
@@ -145,7 +145,7 @@ class cxReader:
                 apply_node = self.make_apply_node(node)
                 self.fd_nodes.append(apply_node)
                 id_ = self.next_id()
-                node = {"@id": id_, "s": node["@id"], "t": apply_node["@id"]}
+                node = {"@id": id_, "s": apply_node["@id"], "t": node["@id"] }
                 self.fd_edges.append(node)
 
         self.have_fd_network = True
@@ -157,7 +157,7 @@ class cxReader:
             elif type_ == "is-a":
                 self.make_isa_network()
 
-    def graphviz_workflow(self, filename=None, rankdir="BT"):
+    def graphviz_workflow(self, filename=None, rankdir="TB"):
         g = Digraph(format="png")
         g.attr('graph', rankdir=rankdir)
         for node in self.io_nodes:
@@ -267,9 +267,11 @@ class FDNGraphvizPlotter(FDNPlotterBase):
     def __init__(self, cxnetwork_list, fix_node_id=True):
         super().__init__(cxnetwork_list, fix_node_id=True)
 
-    def show(self, filename=None):
+    def show(self, filename=None, rankdir="BT"):
 
         g = Digraph(format="png")
+        g.attr('graph', rankdir=rankdir)
+
         for node in self.fd_nodes:
             if "fillcolor" in node:
                 g.node(str(node["@id"]), label=node["n"],
@@ -336,7 +338,6 @@ class FDNCXPlotter(FDNPlotterBase):
                 element_list.append(
                     {'NODE_FILL_COLOR': fillcolor_value})
             if len(element_list) > 0:
-                print("element_list", element_list)
 
                 element_prop = {}
                 for element in element_list:
