@@ -21,7 +21,7 @@ if __name__ == "__main__":
         parser.add_argument("--graphviz_FDN", action="store_true",
                             help="show graphviz FD network",
                             default=False)
-        default_value = "fdn.png"
+        default_value = "fdn.dot"
         parser.add_argument("--graphviz_FDN_filename",
                             help="output name (default: {})".format(
                                 default_value),
